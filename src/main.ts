@@ -1,4 +1,4 @@
-import { Notice, Keymap, Platform, Plugin, addIcon } from "obsidian";
+import { Notice, Keymap, Platform, Plugin, WorkspaceLeaf, addIcon } from "obsidian";
 import { DEFAULT, MOBILE, Homepage, Kind, Period } from "./homepage";
 import { hasRequiredPeriodicity, LEGACY_MOMENT_KIND, MOMENT_MESSAGE } from "./periodic";
 import { DEFAULT_SETTINGS, HomepageSettings, HomepageSettingTab } from "./settings";
@@ -22,9 +22,9 @@ export default class HomepagePlugin extends Plugin {
 	interstitial: HTMLElement;
 	
 	async onload(): Promise<void> {
-		const progressBar = document.body.querySelector(".progress-bar, .app-container.no-transition");
+		const layoutReady = this.app.workspace.layoutReady;
+		if (!layoutReady) this.showInterstitial();
 		
-		this.showInterstitial(progressBar as HTMLElement);
 		this.patchReleaseNotes();
 		
 		this.settings = await this.loadSettings();
@@ -35,7 +35,7 @@ export default class HomepagePlugin extends Plugin {
 		this.app.workspace.onLayoutReady(async () => {
 			const openInitially = (
 				this.homepage.data.openOnStartup &&
-				progressBar && !(await this.hasUrlParams())
+				!layoutReady && !(await this.hasUrlParams())
 			);
 			
 			this.patchNewTabPage();
@@ -120,9 +120,7 @@ export default class HomepagePlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 	
-	showInterstitial(progressBar: HTMLElement | null): void {
-		if (!progressBar) return;
-		
+	showInterstitial(): void {
 		this.interstitial = createDiv({ cls: "nv-homepage-interstitial" });
 		document.body.append(this.interstitial);
 		window.addEventListener("error", this.hideInterstitial);
@@ -177,7 +175,7 @@ export default class HomepagePlugin extends Plugin {
 		if (!ntp) return;
 		
 		ntp.nvOrig_checkForNewTab = ntp.checkForNewTab;
-		ntp.checkForNewTab = async (e: any) => {
+		ntp.checkForNewTab = async (e: WeakSet<WorkspaceLeaf>) => {
 			if (this && this.executing) { return; }
 			return await ntp.nvOrig_checkForNewTab(e);
 		}; 
