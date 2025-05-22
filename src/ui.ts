@@ -18,7 +18,7 @@ class FileSuggest extends AbstractInputSuggest<TFile> {
 
 		abstractFiles.forEach((file: TAbstractFile) => {
 			if (
-				file instanceof TFile && ["md", "canvas"].contains(file.extension) &&
+				file instanceof TFile && ["md", "canvas", "base"].contains(file.extension) &&
 				file.path.toLowerCase().contains(inputLower)
 			) {
 				files.push(file);
@@ -29,15 +29,16 @@ class FileSuggest extends AbstractInputSuggest<TFile> {
 	}
 
 	renderSuggestion(file: TFile, el: HTMLElement) {
+		console.log(file);
 		if (file.extension == "md") {
 			el.setText(trimFile(file));
 		}
 		else {
 			//we don't use trimFile here as the extension isn't displayed here
-			el.setText(file.path.slice(0, -7))
+			el.setText(file.path.split(".").slice(0, -1).join("."))
 			el.insertAdjacentHTML(
 				"beforeend", 
-				`<div class="nav-file-tag" style="display:inline-block;vertical-align:middle">canvas</div>`
+				`<div class="nav-file-tag nv-homepage-file-tag">${file.extension}</div>`
 			);
 		}
 	}
